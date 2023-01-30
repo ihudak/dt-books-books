@@ -4,33 +4,35 @@ import com.dynatrace.books.exception.BadRequestException;
 import com.dynatrace.books.exception.ResourceNotFoundException;
 import com.dynatrace.books.model.Book;
 import com.dynatrace.books.repository.BookRepository;
+import com.dynatrace.books.repository.ConfigRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/")
-public class BookController {
-    @Value("${added.workload.cpu}")
-    private long cpuPressure;
-    @Value("${added.workload.ram}")
-    private int memPressureMb;
-
+@RequestMapping("/api/v1/books")
+public class BookController extends HardworkingController {
     @Autowired
     private BookRepository bookRepository;
+    @Autowired
+    ConfigRepository configRepository;
+    Logger logger = LoggerFactory.getLogger(BookController.class);
 
     // get all books
-    @GetMapping("/books")
+    @GetMapping("")
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
     }
 
     // get a book by id
-    @GetMapping("/books/{id}")
+    @GetMapping("/{id}")
     public Book getBookById(@PathVariable Long id) {
+        simulateHardWork();
+        simulateCrash();
         Optional<Book> book = bookRepository.findById(id);
         if (book.isEmpty()) {
             throw new ResourceNotFoundException("Book not found");
@@ -39,8 +41,10 @@ public class BookController {
     }
 
     // find a book by isbn
-    @GetMapping("/books/find")
+    @GetMapping("/find")
     public Book getBookByIsbn(@RequestParam String isbn) {
+        simulateHardWork();
+        simulateCrash();
         Book bookDb = bookRepository.findByIsbn(isbn);
         if (bookDb == null) {
             throw new ResourceNotFoundException("Book does not exist, ISBN: " + isbn);
@@ -49,14 +53,16 @@ public class BookController {
     }
 
     // ingest a book
-    @PostMapping("/books")
+    @PostMapping("")
     public Book ingestBook(@RequestBody Book book) {
         simulateHardWork();
+        simulateCrash();
+        logger.debug("Creating book " + book.getIsbn());
         return bookRepository.save(book);
     }
 
     // update a book
-    @PutMapping("/books/{id}")
+    @PutMapping("/{id}")
     public Book updateBookById(@PathVariable Long id, @RequestBody Book book) {
         Optional<Book> bookDB = bookRepository.findById(id);
         if (bookDB.isEmpty()) {
@@ -68,42 +74,44 @@ public class BookController {
     }
 
     // delete a book
-    @DeleteMapping("/books/{id}")
+    @DeleteMapping("/{id}")
     public void deleteBookById(@PathVariable Long id) {
         bookRepository.deleteById(id);
     }
 
     // delete all books
-    @DeleteMapping("/books/delete-all")
+    @DeleteMapping("/delete-all")
     public void deleteAllBooks() {
         bookRepository.deleteAll();
     }
 
     // vend a book by isbn
-    @PostMapping("/books/vend")
+    @PostMapping("/vend")
     public Book vendBookByIsbn(@RequestParam String isbn) {
+        simulateHardWork();
+        simulateCrash();
         Book book = bookRepository.findByIsbn(isbn);
         if (book == null) {
             throw new ResourceNotFoundException("Book not found, ISBN: " + isbn);
         }
-        simulateHardWork();
 
         book.setPublished(!book.isPublished());
         return bookRepository.save(book);
     }
 
     // vend all books
-    @PostMapping("/books/vend-all")
+    @PostMapping("/vend-all")
     public void vendAllBooks() {
         // empty loop to simulate hard work
         simulateHardWork();
+        simulateCrash();
 
 //        bookRepository.bulkBookVending(true);
         this.bulkVending(true);
     }
 
     // unvend all books
-    @DeleteMapping("/books/vend-all")
+    @DeleteMapping("/vend-all")
     public void unvendAllBooks() {
 //        bookRepository.bulkBookVending(false);
         this.bulkVending(false);
@@ -116,23 +124,8 @@ public class BookController {
         }
     }
 
-    private void simulateHardWork() {
-        int arraySize = (int)((long)this.memPressureMb * 1024L * 1024L / 8L);
-        if (arraySize < 0) {
-            arraySize = Integer.MAX_VALUE;
-        }
-        long[] longs = new long[arraySize];
-        int j = 0;
-        for(long i = 0; i < this.cpuPressure; i++, j++) {
-            j++;
-            if (j >= arraySize) {
-                j = 0;
-            }
-            try {
-                if (longs[j] > Integer.MAX_VALUE) {
-                    longs[j] = (long) Integer.MIN_VALUE;
-                }
-            } catch (Exception ignored) {};
-        }
+    @Override
+    public ConfigRepository getConfigRepository() {
+        return configRepository;
     }
 }
