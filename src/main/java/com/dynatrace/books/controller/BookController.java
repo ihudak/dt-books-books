@@ -35,7 +35,9 @@ public class BookController extends HardworkingController {
         simulateCrash();
         Optional<Book> book = bookRepository.findById(id);
         if (book.isEmpty()) {
-            throw new ResourceNotFoundException("Book not found");
+            ResourceNotFoundException ex = new ResourceNotFoundException("Book not found");
+            logger.error(ex.getMessage());
+            throw ex;
         }
         return book.get();
     }
@@ -47,7 +49,9 @@ public class BookController extends HardworkingController {
         simulateCrash();
         Book bookDb = bookRepository.findByIsbn(isbn);
         if (bookDb == null) {
-            throw new ResourceNotFoundException("Book does not exist, ISBN: " + isbn);
+            ResourceNotFoundException ex = new ResourceNotFoundException("Book does not exist, ISBN: " + isbn);
+            logger.error(ex.getMessage());
+            throw ex;
         }
         return bookDb;
     }
@@ -66,9 +70,13 @@ public class BookController extends HardworkingController {
     public Book updateBookById(@PathVariable Long id, @RequestBody Book book) {
         Optional<Book> bookDB = bookRepository.findById(id);
         if (bookDB.isEmpty()) {
-            throw new ResourceNotFoundException("Book not found");
+            ResourceNotFoundException ex = new ResourceNotFoundException("Book not found");
+            logger.error(ex.getMessage());
+            throw ex;
         } else if (book.getId() != id || bookDB.get().getId() != id) {
-            throw new BadRequestException("bad book id");
+            BadRequestException ex = new BadRequestException("bad book id");
+            logger.error(ex.getMessage());
+            throw ex;
         }
         return bookRepository.save(book);
     }
@@ -92,7 +100,9 @@ public class BookController extends HardworkingController {
         simulateCrash();
         Book book = bookRepository.findByIsbn(isbn);
         if (book == null) {
-            throw new ResourceNotFoundException("Book not found, ISBN: " + isbn);
+            ResourceNotFoundException ex = new ResourceNotFoundException("Book not found, ISBN: " + isbn);
+            logger.error(ex.getMessage());
+            throw ex;
         }
 
         book.setPublished(!book.isPublished());
