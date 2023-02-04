@@ -47,6 +47,7 @@ public class BookController extends HardworkingController {
     public Book getBookByIsbn(@RequestParam String isbn) {
         simulateHardWork();
         simulateCrash();
+        logger.info("Looking for book " + isbn);
         Book bookDb = bookRepository.findByIsbn(isbn);
         if (bookDb == null) {
             ResourceNotFoundException ex = new ResourceNotFoundException("Book does not exist, ISBN: " + isbn);
