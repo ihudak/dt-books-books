@@ -19,8 +19,8 @@ public class BookController extends HardworkingController {
     @Autowired
     private BookRepository bookRepository;
     @Autowired
-    ConfigRepository configRepository;
-    Logger logger = LoggerFactory.getLogger(BookController.class);
+    private ConfigRepository configRepository;
+    private Logger logger = LoggerFactory.getLogger(BookController.class);
 
     // get all books
     @GetMapping("")
