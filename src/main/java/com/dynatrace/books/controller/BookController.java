@@ -91,7 +91,7 @@ public class BookController extends HardworkingController {
     // delete all books
     @DeleteMapping("/delete-all")
     public void deleteAllBooks() {
-        bookRepository.deleteAll();
+        bookRepository.truncateTable();
     }
 
     // vend a book by isbn
